@@ -1,8 +1,7 @@
-Title Here
-**********
+zlib Storage
+************
 
-
-To learn more, see
+A ZODB wrapper storage that compresses data records using zlib.
 
 
 Changes
