@@ -17,11 +17,14 @@ import doctest
 import transaction
 import unittest
 import zc.zlibstorage
+import ZEO.tests.testZEO
 import zlib
 import ZODB.config
 import ZODB.FileStorage
 import ZODB.interfaces
 import ZODB.MappingStorage
+import ZODB.tests.StorageTestBase
+import ZODB.tests.testFileStorage
 import ZODB.utils
 import zope.interface.verify
 
@@ -119,62 +122,97 @@ First, we'll create an existing file storage:
 
     >>> db = ZODB.DB(ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs'))
     >>> conn = db.open()
-    >>> conn.root()['a'] = 1
+    >>> conn.root.a = 1
     >>> transaction.commit()
-    >>> conn.root()['b'] = ZODB.blob.Blob('Hi\nworld.\n')
+    >>> conn.root.b = ZODB.blob.Blob('Hi\nworld.\n')
     >>> transaction.commit()
-    >>> conn.root()['c'] = conn.root().__class__()
-    >>> conn.root()['c']['a'] = conn.root().__class__()
+    >>> conn.root.c = conn.root().__class__((i,i) for i in range(100))
     >>> transaction.commit()
     >>> db.close()
 
 Now let's open the database compressed:
 
-    >>> db = ZODB.DB(zc.zlibstorage.Storage(
+    >>> db = ZODB.DB(zc.zlibstorage.ZlibStorage(
     ...     ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs')))
     >>> conn = db.open()
     >>> conn.root()['a']
     1
     >>> conn.root()['b'].open().read()
     'Hi\nworld.\n'
-    >>> del conn.root()['b']
+    >>> conn.root()['b'] = ZODB.blob.Blob('Hello\nworld.\n')
     >>> transaction.commit()
     >>> db.close()
 
 Having updated the root, it is now compressed.  To see this, we'll
 open it as a file storage and inspect the record for object 0:
 
-    >>> s = ZODB.FileStorage.FileStorage('data.fs')
-    >>> data, _ = s.load('\0'*8)
+    >>> storage = ZODB.FileStorage.FileStorage('data.fs')
+    >>> data, _ = storage.load('\0'*8)
     >>> data[:2] == '.z'
     True
     >>> zlib.decompress(data[2:])[:50]
     'cpersistent.mapping\nPersistentMapping\nq\x01.}q\x02U\x04data'
 
-The blob record is still uncompressed:
+The new blob record is uncompressed because it is too small:
 
-    >>> s.load('\0'*7+'\1')
+    >>> storage.load('\0'*7+'\3')[0]
+    'cZODB.blob\nBlob\nq\x01.N.'
 
-    >>> s.close()
+Records that we didn't modify remain uncompressed
 
-Let's try packing the file 2 ways:
+    >>> storage.load('\0'*7+'\2')[0] # doctest: +ELLIPSIS
+    'cpersistent.mapping\nPersistentMapping...
+
+
+    >>> storage.close()
+
+Let's try packing the file 4 ways:
 
 - using the compressed storage:
 
     >>> open('data.fs.save', 'wb').write(open('data.fs', 'rb').read())
-    >>> db = ZODB.DB(zc.zlibstorage.Storage(
+    >>> db = ZODB.DB(zc.zlibstorage.ZlibStorage(
     ...     ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs')))
     >>> db.pack()
     >>> sorted(ZODB.utils.u64(i[0]) for i in record_iter(db.storage))
+    [0, 2, 3]
+    >>> db.close()
 
-- and using the storage in non-compress mode:
+- using the storage in non-compress mode:
 
-    >>> open('data.fs.save', 'wb').write(open('data.fs', 'rb').read())
-    >>> db = ZODB.DB(zc.zlibstorage(
+    >>> open('data.fs', 'wb').write(open('data.fs.save', 'rb').read())
+    >>> db = ZODB.DB(zc.zlibstorage.ZlibStorage(
     ...     ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs'),
     ...     compress=False))
+
     >>> db.pack()
     >>> sorted(ZODB.utils.u64(i[0]) for i in record_iter(db.storage))
+    [0, 2, 3]
+    >>> db.close()
+
+- using the server storage:
+
+    >>> open('data.fs', 'wb').write(open('data.fs.save', 'rb').read())
+    >>> db = ZODB.DB(zc.zlibstorage.ServerZlibStorage(
+    ...     ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs'),
+    ...     compress=False))
+
+    >>> db.pack()
+    >>> sorted(ZODB.utils.u64(i[0]) for i in record_iter(db.storage))
+    [0, 2, 3]
+    >>> db.close()
+
+- using the server storage in non-compress mode:
+
+    >>> open('data.fs', 'wb').write(open('data.fs.save', 'rb').read())
+    >>> db = ZODB.DB(zc.zlibstorage.ServerZlibStorage(
+    ...     ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs'),
+    ...     compress=False))
+
+    >>> db.pack()
+    >>> sorted(ZODB.utils.u64(i[0]) for i in record_iter(db.storage))
+    [0, 2, 3]
+    >>> db.close()
     """
 
 class Dummy:
@@ -202,7 +240,7 @@ def test_wrapping():
     """
 Make sure the wrapping methods do what's expected.
 
-    >>> s = zc.zlibstorage.Storage(ZODB.MappingStorage.MappingStorage())
+    >>> s = zc.zlibstorage.ZlibStorage(ZODB.MappingStorage.MappingStorage())
     >>> zope.interface.verify.verifyObject(ZODB.interfaces.IStorageWrapper, s)
     True
 
@@ -260,14 +298,101 @@ If the data are small or otherwise not compressable, it is left as is:
 def record_iter(store):
     next = None
     while 1:
-        oid, tid, data, next = storage.record_iternext(next)
+        oid, tid, data, next = store.record_iternext(next)
         yield oid, tid, data
         if next is None:
             break
 
 
+class FileStorageZlibTests(ZODB.tests.testFileStorage.FileStorageTests):
+
+    def open(self, **kwargs):
+        self._storage = zc.zlibstorage.ZlibStorage(
+            ZODB.FileStorage.FileStorage('FileStorageTests.fs',**kwargs))
+
+class FileStorageZlibTestsWithBlobsEnabled(
+    ZODB.tests.testFileStorage.FileStorageTests):
+
+    def open(self, **kwargs):
+        if 'blob_dir' not in kwargs:
+            kwargs = kwargs.copy()
+            kwargs['blob_dir'] = 'blobs'
+        ZODB.tests.testFileStorage.FileStorageTests.open(self, **kwargs)
+        self._storage = zc.zlibstorage.ZlibStorage(self._storage)
+
+class FileStorageZlibRecoveryTest(
+    ZODB.tests.testFileStorage.FileStorageRecoveryTest):
+
+    def setUp(self):
+        ZODB.tests.StorageTestBase.StorageTestBase.setUp(self)
+        self._storage = zc.zlibstorage.ZlibStorage(
+            ZODB.FileStorage.FileStorage("Source.fs", create=True))
+        self._dst = zc.zlibstorage.ZlibStorage(
+            ZODB.FileStorage.FileStorage("Dest.fs", create=True))
+
+
+
+class FileStorageZEOZlibTests(ZEO.tests.testZEO.FileStorageTests):
+    _expected_interfaces = (
+        ('ZODB.interfaces', 'IStorageRestoreable'),
+        ('ZODB.interfaces', 'IStorageIteration'),
+        ('ZODB.interfaces', 'IStorageUndoable'),
+        ('ZODB.interfaces', 'IStorageCurrentRecordIteration'),
+        ('ZODB.interfaces', 'IExternalGC'),
+        ('ZODB.interfaces', 'IStorage'),
+        ('ZODB.interfaces', 'IStorageWrapper'),
+        ('zope.interface', 'Interface'),
+        )
+
+    def getConfig(self):
+        return """\
+        %import zc.zlibstorage
+        <zlibstorage>
+        <filestorage 1>
+        path Data.fs
+        </filestorage>
+        </zlibstorage>
+        """
+
+class FileStorageClientZlibTests(FileStorageZlibTests):
+
+    def getConfig(self):
+        return """\
+        %import zc.zlibstorage
+        <serverzlibstorage>
+        <filestorage 1>
+        path Data.fs
+        </filestorage>
+        </serverzlibstorage>
+        """
+
+    def _wrap_client(self, client):
+        return zc.zlibstorage.ZlibStorage(client)
+
+
+
+
+
+
 def test_suite():
-    return unittest.TestSuite((
+    suite = unittest.TestSuite()
+    for class_ in (
+        FileStorageZlibTests,
+        FileStorageZlibTestsWithBlobsEnabled,
+        FileStorageZlibRecoveryTest,
+        FileStorageZlibTests,
+        FileStorageClientZlibTests,
+        ):
+        s = unittest.makeSuite(class_, "check")
+        s.layer = ZODB.tests.util.MininalTestLayer(
+            'zlibstoragetests.%s' % class_.__name__)
+        suite.addTest(s)
+
+
+    suite.addTest(
         doctest.DocTestSuite(
-            setUp=setupstack.setUpDirectory, tearDown=setupstack.tearDown),
-        ))
+            setUp=setupstack.setUpDirectory, tearDown=setupstack.tearDown
+            )
+        )
+    return suite
+

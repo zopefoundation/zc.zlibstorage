@@ -4,4 +4,9 @@
     <section type="ZODB.storage" name="*" attribute="base" required="yes" />
     <key name="compress" datatype="boolean" required="no" />
   </sectiontype>
+  <sectiontype name="serverzlibstorage" datatype="zc.zlibstorage.ZConfigServer"
+               implements="ZODB.storage">
+    <section type="ZODB.storage" name="*" attribute="base" required="yes" />
+    <key name="compress" datatype="boolean" required="no" />
+  </sectiontype>
 </component>

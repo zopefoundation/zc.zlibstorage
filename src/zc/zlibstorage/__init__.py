@@ -15,38 +15,31 @@ import zlib
 import ZODB.interfaces
 import zope.interface
 
-class Storage(object):
+class ZlibStorage(object):
 
     zope.interface.implements(ZODB.interfaces.IStorageWrapper)
 
-    def __init__(self, base, compress=True):
-        self.base = base
-        self.compress = compress
-
-        for name in (
+    copied_methods = (
             'close', 'getName', 'getSize', 'history', 'isReadOnly',
             'lastTransaction', 'new_oid', 'sortKey',
             'tpc_abort', 'tpc_begin', 'tpc_finish', 'tpc_vote',
             'loadBlob', 'openCommittedBlobFile', 'temporaryDirectory',
             'supportsUndo', 'undo', 'undoLog', 'undoInfo',
-            ):
+            )
+
+    def __init__(self, base, compress=True):
+        self.base = base
+        self.compress = compress
+
+        for name in self.copied_methods:
             v = getattr(base, name, None)
             if v is not None:
                 setattr(self, name, v)
 
         zope.interface.directlyProvides(self, zope.interface.providedBy(base))
 
-    def _transform(self, data):
-        if self.compress:
-            compressed = '.z'+zlib.compress(data)
-            if len(compressed) < len(data):
-                return compressed
-        return data
-
-    def _untransform(self, data):
-        if data[:2] == '.z':
-            return zlib.decompress(data[2:])
-        return data
+    def __getattr__(self, name):
+        return getattr(self.base, name)
 
     def __len__(self):
         return len(self.base)
@@ -66,13 +59,21 @@ class Storage(object):
     def loadSerial(self, oid, serial):
         return self._untransform(self.base.loadSerial(oid, serial))
 
-    def pack(self, pack_time, referencesf):
+    def pack(self, pack_time, referencesf, gc=None):
         _untransform = self._untransform
         def refs(p, oids=None):
             return referencesf(_untransform(p), oids)
+        if gc is not None:
+            return self.base.pack(pack_time, refs, gc)
+        else:
+            return self.base.pack(pack_time, refs)
 
     def registerDB(self, db):
         self.db = db
+        self._db_transform = db.transform_record_data
+        self._db_untransform = db.untransform_record_data
+
+    _db_transform = _db_untransform = lambda self, data: data
 
     def store(self, oid, serial, data, version, transaction):
         if self.compress:
@@ -86,8 +87,8 @@ class Storage(object):
             oid, serial, data, version, prev_txn, transaction)
 
     def iterator(self, start=None, stop=None):
-        for t in self.base.iterator(start, end):
-            yield Transaction(t)
+        for t in self.base.iterator(start, stop):
+            yield Transaction(self, t)
 
     def storeBlob(self, oid, oldserial, data, blobfilename, version,
                   transaction):
@@ -118,6 +119,40 @@ class Storage(object):
     def untransform_record_data(self, data):
         return self.db.untransform_record_data(self._untransform(data))
 
+    def record_iternext(self, next=None):
+        oid, tid, data, next = self.base.record_iternext(next)
+        return oid, tid, self._untransform(data), next
+
+    def copyTransactionsFrom(self, other):
+        ZODB.blob.copyTransactionsFromTo(other, self)
+
+    def _transform(self, data):
+        if data and self.compress and len(data) > 20:
+            compressed = '.z'+zlib.compress(data)
+            if len(compressed) < len(data):
+                return compressed
+        return data
+
+    def _untransform(self, data):
+        if data[:2] == '.z':
+            return zlib.decompress(data[2:])
+        return data
+
+    def copyTransactionsFrom(self, other):
+        ZODB.blob.copyTransactionsFromTo(other, self)
+
+
+class ServerZlibStorage(ZlibStorage):
+    """Use on ZEO storage server when ZlibStorage is used on client
+
+    Don't do conversion as part of load/store, but provide
+    pickle decoding.
+    """
+
+    copied_methods = ZlibStorage.copied_methods + (
+        'load', 'loadBefore', 'loadSerial', 'store', 'restore',
+        'iterator', 'storeBlob', 'restoreBlob', 'record_iternext',
+        )
 
 class Transaction(object):
 
@@ -132,9 +167,12 @@ class Transaction(object):
             yield r
 
     def __getattr__(self, name):
-        return getattr(self.__trans)
+        return getattr(self.__trans, name)
+
 
 class ZConfig:
+
+    _factory = ZlibStorage
 
     def __init__(self, config):
         self.config = config
@@ -145,4 +183,8 @@ class ZConfig:
         compress = self.config.compress
         if compress is None:
             compress = True
-        return Storage(base, compress)
+        return self._factory(base, compress)
+
+class ZConfigServer(ZConfig):
+
+    _factory = ServerZlibStorage
