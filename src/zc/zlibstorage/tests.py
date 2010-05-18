@@ -354,7 +354,7 @@ class FileStorageZEOZlibTests(ZEO.tests.testZEO.FileStorageTests):
         </zlibstorage>
         """
 
-class FileStorageClientZlibTests(FileStorageZlibTests):
+class FileStorageClientZlibTests(FileStorageZEOZlibTests):
 
     def getConfig(self):
         return """\
@@ -380,7 +380,7 @@ def test_suite():
         FileStorageZlibTests,
         FileStorageZlibTestsWithBlobsEnabled,
         FileStorageZlibRecoveryTest,
-        FileStorageZlibTests,
+        FileStorageZEOZlibTests,
         FileStorageClientZlibTests,
         ):
         s = unittest.makeSuite(class_, "check")
