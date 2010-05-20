@@ -27,9 +27,17 @@ class ZlibStorage(object):
             'supportsUndo', 'undo', 'undoLog', 'undoInfo',
             )
 
-    def __init__(self, base, compress=True):
+    def __init__(self, base, *args, **kw):
         self.base = base
-        self.compress = compress
+
+        # Sorry for the lambda hijinks below, but I really want to use
+        # the name "compress" for both the module-level function name
+        # and for the argument to this function. :/
+        if (lambda compress=True: compress)(*args, **kw):
+            self._transform = compress  # Refering to module func below!
+        else:
+            self._transform = lambda data: data
+        self._untransform = decompress
 
         for name in self.copied_methods:
             v = getattr(base, name, None)
@@ -37,6 +45,8 @@ class ZlibStorage(object):
                 setattr(self, name, v)
 
         zope.interface.directlyProvides(self, zope.interface.providedBy(base))
+
+        base.registerDB(self)
 
     def __getattr__(self, name):
         return getattr(self.base, name)
@@ -76,33 +86,27 @@ class ZlibStorage(object):
     _db_transform = _db_untransform = lambda self, data: data
 
     def store(self, oid, serial, data, version, transaction):
-        if self.compress:
-            data = self._transform(data)
-        return self.base.store(oid, serial, data, version, transaction)
+        return self.base.store(oid, serial, self._transform(data), version,
+                               transaction)
 
     def restore(self, oid, serial, data, version, prev_txn, transaction):
-        if self.compress:
-            data = self._transform(data)
         return self.base.restore(
-            oid, serial, data, version, prev_txn, transaction)
+            oid, serial, self._transform(data), version, prev_txn, transaction)
 
     def iterator(self, start=None, stop=None):
         for t in self.base.iterator(start, stop):
-            yield Transaction(self, t)
+            yield Transaction(t)
 
     def storeBlob(self, oid, oldserial, data, blobfilename, version,
                   transaction):
-        if self.compress:
-            data = self._transform(data)
-        return self.base.storeBlob(oid, oldserial, data, blobfilename, version,
-                                   transaction)
+        return self.base.storeBlob(
+            oid, oldserial, self._transform(data), blobfilename, version,
+            transaction)
 
     def restoreBlob(self, oid, serial, data, blobfilename, prev_txn,
                     transaction):
-        if self.compress:
-            data = self._transform(data)
-        return self.base.restoreBlob(oid, serial, data, blobfilename, prev_txn,
-                                     transaction)
+        return self.base.restoreBlob(oid, serial, self._transform(data),
+                                     blobfilename, prev_txn, transaction)
 
     def invalidateCache(self):
         return self.db.invalidateCache()
@@ -114,10 +118,10 @@ class ZlibStorage(object):
         return self.db.references(self._untransform(record), oids)
 
     def transform_record_data(self, data):
-        return self._transform(self.db.transform_record_data(data))
+        return self._transform(self._db_transform(data))
 
     def untransform_record_data(self, data):
-        return self.db.untransform_record_data(self._untransform(data))
+        return self._db_untransform(self._untransform(data))
 
     def record_iternext(self, next=None):
         oid, tid, data, next = self.base.record_iternext(next)
@@ -126,21 +130,18 @@ class ZlibStorage(object):
     def copyTransactionsFrom(self, other):
         ZODB.blob.copyTransactionsFromTo(other, self)
 
-    def _transform(self, data):
-        if data and self.compress and len(data) > 20:
-            compressed = '.z'+zlib.compress(data)
-            if len(compressed) < len(data):
-                return compressed
-        return data
-
-    def _untransform(self, data):
-        if data[:2] == '.z':
-            return zlib.decompress(data[2:])
-        return data
-
     def copyTransactionsFrom(self, other):
         ZODB.blob.copyTransactionsFromTo(other, self)
 
+def compress(data):
+    if data and (len(data) > 20) and data[:2] != '.z':
+        compressed = '.z'+zlib.compress(data)
+        if len(compressed) < len(data):
+            return compressed
+    return data
+
+def decompress(data):
+    return data[:2] == '.z' and zlib.decompress(data[2:]) or data
 
 class ServerZlibStorage(ZlibStorage):
     """Use on ZEO storage server when ZlibStorage is used on client
@@ -156,14 +157,13 @@ class ServerZlibStorage(ZlibStorage):
 
 class Transaction(object):
 
-    def __init__(self, store, trans):
-        self.__store = store
+    def __init__(self, trans):
         self.__trans = trans
 
     def __iter__(self):
         for r in self.__trans:
             if r.data:
-                r.data = self.__store._untransform(r.data)
+                r.data = decompress(r.data)
             yield r
 
     def __getattr__(self, name):
