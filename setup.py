@@ -1,6 +1,6 @@
 ##############################################################################
 #
-# Copyright (c) Zope Foundation and Contributors.
+# Copyright (c) 2010 Zope Foundation and Contributors.
 # All Rights Reserved.
 #
 # This software is subject to the provisions of the Zope Public License,
@@ -14,12 +14,16 @@
 name, version = 'zc.zlibstorage', '0'
 
 install_requires = ['ZODB3 >=3.10.0b1', 'setuptools']
-extras_require = dict(test=['zope.testing'])
+extras_require = dict(test=['zope.testing', 'manuel'])
 
 entry_points = """
 """
 
 from setuptools import setup
+import os
+
+long_description = open(os.path.join('src', *name.split('.')+['README.txt'])
+                        ).read()
 
 setup(
     author = 'Jim Fulton',
@@ -27,8 +31,8 @@ setup(
     license = 'ZPL 2.1',
 
     name = name, version = version,
-    long_description=open('README.txt').read(),
-    description = open('README.txt').read().strip().split('\n')[0],
+    long_description=long_description,
+    description = long_description.split('\n')[1],
     packages = [name.split('.')[0], name],
     namespace_packages = [name.split('.')[0]],
     package_dir = {'': 'src'},
