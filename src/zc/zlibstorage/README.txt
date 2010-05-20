@@ -3,7 +3,7 @@ ZODB storage wrapper for zlib compression of database records
 =============================================================
 
 The ``zc.zlibstorage`` package provides ZODB storage wrapper
-implementations that provide compression of database records.
+implementations that provides compression of database records.
 
 .. contents::
 
@@ -142,7 +142,7 @@ Compressing entire databases
 ============================
 
 One way to compress all of the records in a database is to copy data
-from an uncompressed database to a comprressed once, as in::
+from an uncompressed database to a compressed one, as in::
 
     import ZODB.FileStorage, zc.zlibstorage
 
