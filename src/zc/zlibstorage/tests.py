@@ -14,6 +14,9 @@
 from zope.testing import setupstack
 
 import doctest
+import manuel.capture
+import manuel.doctest
+import manuel.testing
 import transaction
 import unittest
 import zc.zlibstorage
@@ -291,8 +294,20 @@ If the data are small or otherwise not compressable, it is left as is:
 
     >>> l
     [0, 1, 2, '0', '1']
+    """
 
+def dont_double_compress():
+    """
+    This test is a bit artificial in that we want to make sure we
+    don't double compress and we don't want to rely on not double
+    compressing simply because doing so would make the pickle smaller.
+    So this test is actually testing that we don't compress strings
+    that start withe the compressed marker.
 
+    >>> data = '.z'+'x'*80
+    >>> store = zc.zlibstorage.ZlibStorage(ZODB.MappingStorage.MappingStorage())
+    >>> store._transform(data) == data
+    True
     """
 
 def record_iter(store):
@@ -369,11 +384,6 @@ class FileStorageClientZlibTests(FileStorageZEOZlibTests):
     def _wrap_client(self, client):
         return zc.zlibstorage.ZlibStorage(client)
 
-
-
-
-
-
 def test_suite():
     suite = unittest.TestSuite()
     for class_ in (
@@ -388,11 +398,36 @@ def test_suite():
             'zlibstoragetests.%s' % class_.__name__)
         suite.addTest(s)
 
+    # The conflict resolution and blob tests don't exercise proper
+    # plumbing for libstorage because the sample data they use
+    # compresses to larger than the original.  Run the tests again
+    # after monkey patching zlibstorage to compress everything.
 
-    suite.addTest(
-        doctest.DocTestSuite(
-            setUp=setupstack.setUpDirectory, tearDown=setupstack.tearDown
-            )
-        )
+    class ZLibHackLayer:
+
+        orig = [zc.zlibstorage.compress] # []s hide the function :)
+
+        @classmethod
+        def setUp(self):
+            zc.zlibstorage.transform = (
+                lambda data: data and ('.z'+zlib.compress(data)) or data
+                )
+
+        @classmethod
+        def tearDown(self):
+            [zc.zlibstorage.compress] = self.orig
+
+    s = unittest.makeSuite(FileStorageZlibTestsWithBlobsEnabled, "check")
+    s.layer = ZLibHackLayer
+    suite.addTest(s)
+
+    suite.addTest(doctest.DocTestSuite(
+        setUp=setupstack.setUpDirectory, tearDown=setupstack.tearDown
+        ))
+    suite.addTest(manuel.testing.TestSuite(
+        manuel.doctest.Manuel() + manuel.capture.Manuel(),
+        'README.txt',
+        setUp=setupstack.setUpDirectory, tearDown=setupstack.tearDown
+        ))
     return suite
 
