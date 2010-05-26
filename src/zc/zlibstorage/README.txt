@@ -214,12 +214,15 @@ to compress and uncompress data records are available as
 
    >>> _ = (zc.zlibstorage.compress, zc.zlibstorage.decompress)
 
-.. Hide changes for now
+Changes
+=======
 
-    Changes
-    =======
+0.1.1 2010-05-26
+----------------
 
-    0.1.0 2010-05-20
-    ----------------
+- Fixed a packaging bug.
 
-    Initial release
+0.1.0 2010-05-20
+----------------
+
+Initial release
