@@ -369,7 +369,14 @@ class FileStorageZEOZlibTests(ZEO.tests.testZEO.FileStorageTests):
         </zlibstorage>
         """
 
-class FileStorageClientZlibTests(FileStorageZEOZlibTests):
+class FileStorageClientZlibZEOZlibTests(FileStorageZEOZlibTests):
+
+    def _wrap_client(self, client):
+        return zc.zlibstorage.ZlibStorage(client)
+
+class FileStorageClientZlibZEOServerZlibTests(
+    FileStorageClientZlibZEOZlibTests
+    ):
 
     def getConfig(self):
         return """\
@@ -381,9 +388,6 @@ class FileStorageClientZlibTests(FileStorageZEOZlibTests):
         </serverzlibstorage>
         """
 
-    def _wrap_client(self, client):
-        return zc.zlibstorage.ZlibStorage(client)
-
 def test_suite():
     suite = unittest.TestSuite()
     for class_ in (
@@ -391,7 +395,8 @@ def test_suite():
         FileStorageZlibTestsWithBlobsEnabled,
         FileStorageZlibRecoveryTest,
         FileStorageZEOZlibTests,
-        FileStorageClientZlibTests,
+        FileStorageClientZlibZEOZlibTests,
+        FileStorageClientZlibZEOServerZlibTests,
         ):
         s = unittest.makeSuite(class_, "check")
         s.layer = ZODB.tests.util.MininalTestLayer(
