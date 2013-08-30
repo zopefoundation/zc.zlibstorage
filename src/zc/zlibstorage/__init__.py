@@ -15,9 +15,10 @@ import zlib
 import ZODB.interfaces
 import zope.interface
 
+@zope.interface.implementer(
+        ZODB.interfaces.IStorageWrapper,
+        )
 class ZlibStorage(object):
-
-    zope.interface.implements(ZODB.interfaces.IStorageWrapper)
 
     copied_methods = (
             'close', 'getName', 'getSize', 'history', 'isReadOnly',
@@ -134,14 +135,14 @@ class ZlibStorage(object):
         ZODB.blob.copyTransactionsFromTo(other, self)
 
 def compress(data):
-    if data and (len(data) > 20) and data[:2] != '.z':
-        compressed = '.z'+zlib.compress(data)
+    if data and (len(data) > 20) and data[:2] != b'.z':
+        compressed = b'.z'+zlib.compress(data)
         if len(compressed) < len(data):
             return compressed
     return data
 
 def decompress(data):
-    return data[:2] == '.z' and zlib.decompress(data[2:]) or data
+    return data[:2] == b'.z' and zlib.decompress(data[2:]) or data
 
 class ServerZlibStorage(ZlibStorage):
     """Use on ZEO storage server when ZlibStorage is used on client
