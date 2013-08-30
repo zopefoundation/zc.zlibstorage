@@ -13,7 +13,7 @@
 ##############################################################################
 name, version = 'zc.zlibstorage', '0'
 
-install_requires = ['setuptools']
+install_requires = ['setuptools', 'ZODB', 'zope.interface']
 extras_require = dict(test=['zope.testing', 'manuel'])
 
 entry_points = """
