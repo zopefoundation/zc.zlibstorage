@@ -57,7 +57,7 @@ zlibstorage tag:
     >>> conn = db.open()
     >>> conn.root()['a'] = 1
     >>> transaction.commit()
-    >>> conn.root()['b'] = ZODB.blob.Blob('Hi\nworld.\n')
+    >>> conn.root()['b'] = ZODB.blob.Blob(b'Hi\nworld.\n')
     >>> transaction.commit()
 
     >>> db.close()
@@ -67,7 +67,7 @@ zlibstorage tag:
     >>> conn.root()['a']
     1
     >>> conn.root()['b'].open().read()
-    'Hi\nworld.\n'
+    b'Hi\nworld.\n'
     >>> db.close()
 
 After putting some data in, the records will be compressed, unless
@@ -76,7 +76,7 @@ doing so would make them bigger:
     >>> for t in ZODB.FileStorage.FileIterator('data.fs'):
     ...     for r in t:
     ...         data = r.data
-    ...         if r.data[:2] != '.z':
+    ...         if r.data[:2] != b'.z':
     ...             if len(zlib.compress(data))+2 < len(data):
     ...                 print('oops', repr(r.oid))
     ...         else: _ = zlib.decompress(data[2:])
@@ -104,7 +104,7 @@ You can disable compression.
     >>> conn = db.open()
     >>> conn.root()['a'] = 1
     >>> transaction.commit()
-    >>> conn.root()['b'] = ZODB.blob.Blob('Hi\nworld.\n')
+    >>> conn.root()['b'] = ZODB.blob.Blob(b'Hi\nworld.\n')
     >>> transaction.commit()
 
     >>> db.close()
@@ -116,7 +116,7 @@ Since we didn't compress, we can open the storage using a plain file storage:
     >>> conn.root()['a']
     1
     >>> conn.root()['b'].open().read()
-    'Hi\nworld.\n'
+    b'Hi\nworld.\n'
     >>> db.close()
     """
 
@@ -130,7 +130,7 @@ First, we'll create an existing file storage:
     >>> conn = db.open()
     >>> conn.root.a = 1
     >>> transaction.commit()
-    >>> conn.root.b = ZODB.blob.Blob('Hi\nworld.\n')
+    >>> conn.root.b = ZODB.blob.Blob(b'Hi\nworld.\n')
     >>> transaction.commit()
     >>> conn.root.c = conn.root().__class__((i,i) for i in range(100))
     >>> transaction.commit()
@@ -144,8 +144,8 @@ Now let's open the database compressed:
     >>> conn.root()['a']
     1
     >>> conn.root()['b'].open().read()
-    'Hi\nworld.\n'
-    >>> conn.root()['b'] = ZODB.blob.Blob('Hello\nworld.\n')
+    b'Hi\nworld.\n'
+    >>> conn.root()['b'] = ZODB.blob.Blob(b'Hello\nworld.\n')
     >>> transaction.commit()
     >>> db.close()
 
@@ -153,21 +153,21 @@ Having updated the root, it is now compressed.  To see this, we'll
 open it as a file storage and inspect the record for object 0:
 
     >>> storage = ZODB.FileStorage.FileStorage('data.fs')
-    >>> data, _ = storage.load('\0'*8)
-    >>> data[:2] == '.z'
+    >>> data, _ = storage.load(b'\0'*8)
+    >>> data[:2] == b'.z'
     True
     >>> zlib.decompress(data[2:])[:50]
-    'cpersistent.mapping\nPersistentMapping\nq\x01.}q\x02U\x04data'
+    b'cpersistent.mapping\nPersistentMapping\nq\x01.}q\x02U\x04data'
 
 The new blob record is uncompressed because it is too small:
 
-    >>> storage.load('\0'*7+'\3')[0]
-    'cZODB.blob\nBlob\nq\x01.N.'
+    >>> storage.load(b'\0'*7+b'\3')[0]
+    b'cZODB.blob\nBlob\nq\x01.N.'
 
 Records that we didn't modify remain uncompressed
 
-    >>> storage.load('\0'*7+'\2')[0] # doctest: +ELLIPSIS
-    'cpersistent.mapping\nPersistentMapping...
+    >>> storage.load(b'\0'*7+b'\2')[0] # doctest: +ELLIPSIS
+    b'cpersistent.mapping\nPersistentMapping...
 
 
     >>> storage.close()
@@ -254,12 +254,12 @@ Make sure the wrapping methods do what's expected.
     >>> s.invalidateCache()
     invalidateCache called
 
-    >>> s.invalidate('1', range(3), '')
+    >>> s.invalidate('1', list(range(3)), '')
     invalidate ('1', [0, 1, 2], '')
 
     >>> data = ' '.join(map(str, range(9)))
     >>> transformed = s.transform_record_data(data)
-    >>> transformed == '.z'+zlib.compress(data.encode('hex'))
+    >>> transformed == b'.z'+zlib.compress(data.encode('hex'))
     True
 
     >>> s.untransform_record_data(transformed) == data
@@ -279,7 +279,7 @@ If the data are small or otherwise not compressable, it is left as is:
 
     >>> data = ' '.join(map(str, range(2)))
     >>> transformed = s.transform_record_data(data)
-    >>> transformed == '.z'+zlib.compress(data.encode('hex'))
+    >>> transformed == b'.z'+zlib.compress(data.encode('hex'))
     False
 
     >>> transformed == data.encode('hex')
@@ -307,7 +307,7 @@ def dont_double_compress():
     So this test is actually testing that we don't compress strings
     that start withe the compressed marker.
 
-    >>> data = '.z'+'x'*80
+    >>> data = b'.z'+b'x'*80
     >>> store = zc.zlibstorage.ZlibStorage(ZODB.MappingStorage.MappingStorage())
     >>> store._transform(data) == data
     True
@@ -418,7 +418,7 @@ def test_suite():
         @classmethod
         def setUp(self):
             zc.zlibstorage.transform = (
-                lambda data: data and ('.z'+zlib.compress(data)) or data
+                lambda data: data and (b'.z'+zlib.compress(data)) or data
                 )
 
         @classmethod

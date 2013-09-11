@@ -23,8 +23,8 @@ constructed by passing another storage, as in::
 
     >>> import zlib
     >>> exec(src)
-    >>> data = 'x'*100
-    >>> storage.transform_record_data(data) == '.z'+zlib.compress(data)
+    >>> data = b'x'*100
+    >>> storage.transform_record_data(data) == b'.z'+zlib.compress(data)
     True
     >>> storage.close()
 
@@ -44,7 +44,7 @@ When using a ZODB configuration file, the zlibstorage tag is used::
 
     >>> import ZODB.config
     >>> db = ZODB.config.databaseFromString(src)
-    >>> db.storage.transform_record_data(data) == '.z'+zlib.compress(data)
+    >>> db.storage.transform_record_data(data) == b'.z'+zlib.compress(data)
     True
     >>> db.close()
 
@@ -77,7 +77,7 @@ server configuration file::
     >>> src = src[:src.find('<zeo>')]+src[src.find('</zeo>')+7:]
 
     >>> storage = ZODB.config.storageFromString(src)
-    >>> storage.transform_record_data(data) == '.z'+zlib.compress(data)
+    >>> storage.transform_record_data(data) == b'.z'+zlib.compress(data)
     True
     >>> storage.__class__.__name__
     'ServerZlibStorage'
@@ -175,7 +175,7 @@ from an uncompressed database to a compressed one, as in::
 
     >>> import ZODB.utils
     >>> for i in range(3):
-    ...     if not new.base.load(ZODB.utils.p64(i))[0][:2] == '.z':
+    ...     if not new.base.load(ZODB.utils.p64(i))[0][:2] == b'.z':
     ...         print('oops {}'.format(i))
     >>> len(new)
     3
@@ -200,7 +200,7 @@ to compress and uncompress data records are available as
    Compress the given data if:
 
    - it is a string more than 20 characters in length,
-   - it doesn't start with the compressed-record marker, ``'.z'``, and
+   - it doesn't start with the compressed-record marker, ``b'.z'``, and
    - the compressed size is less the original.
 
    The compressed (or original) data are returned.
