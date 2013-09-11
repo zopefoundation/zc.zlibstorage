@@ -16,6 +16,7 @@ from __future__ import print_function
 import unittest
 import doctest
 import zlib
+import binascii
 
 import manuel.capture
 import manuel.doctest
@@ -232,14 +233,14 @@ class Dummy:
     def references(self, record, oids=None):
         if oids is None:
             oids = []
-        oids.extend(record.decode('hex').split())
+        oids.extend(binascii.unhexlify(record).split())
         return oids
 
     def transform_record_data(self, data):
-        return data.encode('hex')
+        return binascii.hexlify(data)
 
     def untransform_record_data(self, data):
-        return data.decode('hex')
+        return binascii.unhexlify(data)
 
 
 def test_wrapping():
@@ -257,9 +258,9 @@ Make sure the wrapping methods do what's expected.
     >>> s.invalidate('1', list(range(3)), '')
     invalidate ('1', [0, 1, 2], '')
 
-    >>> data = ' '.join(map(str, range(9)))
+    >>> data = b'0 1 2 3 4 5 6 7 8'
     >>> transformed = s.transform_record_data(data)
-    >>> transformed == b'.z'+zlib.compress(data.encode('hex'))
+    >>> transformed == b'.z'+zlib.compress(binascii.hexlify(data))
     True
 
     >>> s.untransform_record_data(transformed) == data
@@ -268,7 +269,7 @@ Make sure the wrapping methods do what's expected.
     >>> s.references(transformed)
     ['0', '1', '2', '3', '4', '5', '6', '7', '8']
 
-    >>> l = range(3)
+    >>> l = list(range(3))
     >>> s.references(transformed, l)
     [0, 1, 2, '0', '1', '2', '3', '4', '5', '6', '7', '8']
 
@@ -277,12 +278,12 @@ Make sure the wrapping methods do what's expected.
 
 If the data are small or otherwise not compressable, it is left as is:
 
-    >>> data = ' '.join(map(str, range(2)))
+    >>> data = b'0 1'
     >>> transformed = s.transform_record_data(data)
-    >>> transformed == b'.z'+zlib.compress(data.encode('hex'))
+    >>> transformed == b'.z'+zlib.compress(binascii.hexlify(data))
     False
 
-    >>> transformed == data.encode('hex')
+    >>> transformed == binascii.hexlify(data)
     True
 
     >>> s.untransform_record_data(transformed) == data
@@ -291,7 +292,7 @@ If the data are small or otherwise not compressable, it is left as is:
     >>> s.references(transformed)
     ['0', '1']
 
-    >>> l = range(3)
+    >>> l = list(range(3))
     >>> s.references(transformed, l)
     [0, 1, 2, '0', '1']
 
