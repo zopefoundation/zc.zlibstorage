@@ -17,6 +17,7 @@ import unittest
 import doctest
 import zlib
 import binascii
+import re
 
 import manuel.capture
 import manuel.doctest
@@ -32,6 +33,7 @@ import ZODB.tests.testFileStorage
 import ZODB.utils
 import zope.interface.verify
 from zope.testing import setupstack
+from zope.testing.renormalizing import RENormalizing
 
 import zc.zlibstorage
 
@@ -430,7 +432,14 @@ def test_suite():
     s.layer = ZLibHackLayer
     suite.addTest(s)
 
+    checker = RENormalizing([
+        # Py3k renders bytes where Python2 used native strings...
+        (re.compile(r"b'"), "'"),
+        (re.compile(r'b"'), '"'),
+    ])
+
     suite.addTest(doctest.DocTestSuite(
+        checker=checker,
         setUp=setupstack.setUpDirectory, tearDown=setupstack.tearDown
         ))
     suite.addTest(manuel.testing.TestSuite(
