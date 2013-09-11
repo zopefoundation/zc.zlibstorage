@@ -3,3 +3,10 @@ dist
 manuel*
 *.egg-info
 zope.*
+bin/
+*.pyc
+__pycache__/
+.tox/
+develop-eggs/
+eggs/
+.installed.cfg
