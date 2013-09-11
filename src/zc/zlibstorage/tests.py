@@ -11,17 +11,17 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-from zope.testing import setupstack
+from __future__ import print_function
 
+import unittest
 import doctest
+import zlib
+
 import manuel.capture
 import manuel.doctest
 import manuel.testing
 import transaction
-import unittest
-import zc.zlibstorage
 import ZEO.tests.testZEO
-import zlib
 import ZODB.config
 import ZODB.FileStorage
 import ZODB.interfaces
@@ -30,6 +30,9 @@ import ZODB.tests.StorageTestBase
 import ZODB.tests.testFileStorage
 import ZODB.utils
 import zope.interface.verify
+from zope.testing import setupstack
+
+import zc.zlibstorage
 
 
 def test_config():
@@ -75,7 +78,7 @@ doing so would make them bigger:
     ...         data = r.data
     ...         if r.data[:2] != '.z':
     ...             if len(zlib.compress(data))+2 < len(data):
-    ...                 print 'oops', `r.oid`
+    ...                 print('oops', repr(r.oid))
     ...         else: _ = zlib.decompress(data[2:])
     """
 
@@ -221,10 +224,10 @@ Let's try packing the file 4 ways:
 class Dummy:
 
     def invalidateCache(self):
-        print 'invalidateCache called'
+        print('invalidateCache called')
 
     def invalidate(self, *args):
-        print 'invalidate', args
+        print('invalidate', args)
 
     def references(self, record, oids=None):
         if oids is None:
