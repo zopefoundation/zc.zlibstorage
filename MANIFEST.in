@@ -1,2 +1,3 @@
 include src/zc/zlibstorage/README.txt
 include src/zc/zlibstorage/component.xml
+include buildout.cfg
