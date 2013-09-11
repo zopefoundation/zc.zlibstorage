@@ -18,6 +18,7 @@ import doctest
 import zlib
 import binascii
 import re
+import pickle
 
 import manuel.capture
 import manuel.doctest
@@ -159,19 +160,24 @@ open it as a file storage and inspect the record for object 0:
     >>> data, _ = storage.load(b'\0'*8)
     >>> data[:2] == b'.z'
     True
-    >>> zlib.decompress(data[2:])[:50]
-    b'cpersistent.mapping\nPersistentMapping\nq\x01.}q\x02U\x04data'
+    >>> pickle.loads(zlib.decompress(data[2:]))
+    <class 'persistent.mapping.PersistentMapping'>
 
 The new blob record is uncompressed because it is too small:
 
-    >>> storage.load(b'\0'*7+b'\3')[0]
-    b'cZODB.blob\nBlob\nq\x01.N.'
+    >>> data, _ = storage.load(b'\0'*7+b'\3')
+    >>> data[:2] == b'.z'
+    False
+    >>> pickle.loads(data)
+    <class 'ZODB.blob.Blob'>
 
 Records that we didn't modify remain uncompressed
 
-    >>> storage.load(b'\0'*7+b'\2')[0] # doctest: +ELLIPSIS
-    b'cpersistent.mapping\nPersistentMapping...
-
+    >>> data, _ = storage.load(b'\0'*7+b'\2')
+    >>> data[:2] == b'.z'
+    False
+    >>> pickle.loads(data)
+    <class 'persistent.mapping.PersistentMapping'>
 
     >>> storage.close()
 
