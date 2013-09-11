@@ -66,8 +66,8 @@ zlibstorage tag:
     >>> conn = db.open()
     >>> conn.root()['a']
     1
-    >>> conn.root()['b'].open().read()
-    b'Hi\nworld.\n'
+    >>> conn.root()['b'].open().read() == b'Hi\nworld.\n'
+    True
     >>> db.close()
 
 After putting some data in, the records will be compressed, unless
@@ -115,8 +115,8 @@ Since we didn't compress, we can open the storage using a plain file storage:
     >>> conn = db.open()
     >>> conn.root()['a']
     1
-    >>> conn.root()['b'].open().read()
-    b'Hi\nworld.\n'
+    >>> conn.root()['b'].open().read() == b'Hi\nworld.\n'
+    True
     >>> db.close()
     """
 
@@ -143,8 +143,8 @@ Now let's open the database compressed:
     >>> conn = db.open()
     >>> conn.root()['a']
     1
-    >>> conn.root()['b'].open().read()
-    b'Hi\nworld.\n'
+    >>> conn.root()['b'].open().read() == b'Hi\nworld.\n'
+    True
     >>> conn.root()['b'] = ZODB.blob.Blob(b'Hello\nworld.\n')
     >>> transaction.commit()
     >>> db.close()
