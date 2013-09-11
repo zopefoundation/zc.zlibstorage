@@ -22,7 +22,7 @@ constructed by passing another storage, as in::
 .. -> src
 
     >>> import zlib
-    >>> exec src
+    >>> exec(src)
     >>> data = 'x'*100
     >>> storage.transform_record_data(data) == '.z'+zlib.compress(data)
     True
@@ -105,7 +105,7 @@ records if they are encountered. Here's an example from in Python::
 
 .. -> src
 
-    >>> exec src
+    >>> exec(src)
     >>> storage.transform_record_data(data) == data
     True
     >>> storage.close()
@@ -176,7 +176,7 @@ from an uncompressed database to a compressed one, as in::
     >>> import ZODB.utils
     >>> for i in range(3):
     ...     if not new.base.load(ZODB.utils.p64(i))[0][:2] == '.z':
-    ...         print 'oops', i
+    ...         print('oops {}'.format(i))
     >>> len(new)
     3
 
