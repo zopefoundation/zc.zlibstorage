@@ -28,7 +28,9 @@ def read(filename):
         return f.read()
 
 
-long_description = read(os.path.join('src', *name.split('.') + ['README.txt']))
+readme = read(os.path.join('src', *name.split('.') + ['README.txt']))
+changes = read('CHANGES.rst')
+long_description = readme + '\n\n' + changes
 
 setup(
     author='Jim Fulton',
