@@ -179,7 +179,7 @@ Let's try packing the file 4 ways:
 
 - using the compressed storage:
 
-    >>> open('data.fs.save', 'wb').write(open('data.fs', 'rb').read())
+    >>> _ = open('data.fs.save', 'wb').write(open('data.fs', 'rb').read())
     >>> db = ZODB.DB(zc.zlibstorage.ZlibStorage(
     ...     ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs')))
     >>> db.pack()
@@ -189,7 +189,7 @@ Let's try packing the file 4 ways:
 
 - using the storage in non-compress mode:
 
-    >>> open('data.fs', 'wb').write(open('data.fs.save', 'rb').read())
+    >>> _ = open('data.fs', 'wb').write(open('data.fs.save', 'rb').read())
     >>> db = ZODB.DB(zc.zlibstorage.ZlibStorage(
     ...     ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs'),
     ...     compress=False))
@@ -201,7 +201,7 @@ Let's try packing the file 4 ways:
 
 - using the server storage:
 
-    >>> open('data.fs', 'wb').write(open('data.fs.save', 'rb').read())
+    >>> _ = open('data.fs', 'wb').write(open('data.fs.save', 'rb').read())
     >>> db = ZODB.DB(zc.zlibstorage.ServerZlibStorage(
     ...     ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs'),
     ...     compress=False))
@@ -213,7 +213,7 @@ Let's try packing the file 4 ways:
 
 - using the server storage in non-compress mode:
 
-    >>> open('data.fs', 'wb').write(open('data.fs.save', 'rb').read())
+    >>> _ = open('data.fs', 'wb').write(open('data.fs.save', 'rb').read())
     >>> db = ZODB.DB(zc.zlibstorage.ServerZlibStorage(
     ...     ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs'),
     ...     compress=False))
