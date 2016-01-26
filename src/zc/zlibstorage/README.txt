@@ -11,7 +11,7 @@ Usage
 =====
 
 The primary storage is ``zc.zlibstorage.ZlibStorage``.  It is used as
-a wrapper around a lower-level storage.  From Python, is is
+a wrapper around a lower-level storage.  From Python, it is
 constructed by passing another storage, as in::
 
     import ZODB.FileStorage, zc.zlibstorage
