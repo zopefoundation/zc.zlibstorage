@@ -113,7 +113,7 @@ class ZlibStorage(object):
         return self.db.invalidateCache()
 
     def invalidate(self, transaction_id, oids, version=''):
-        return self.db.invalidate(transaction_id, oids, version)
+        return self.db.invalidate(transaction_id, oids)
 
     def references(self, record, oids=None):
         return self.db.references(self._untransform(record), oids)

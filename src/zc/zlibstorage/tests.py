@@ -264,7 +264,7 @@ Make sure the wrapping methods do what's expected.
     invalidateCache called
 
     >>> s.invalidate('1', list(range(3)), '')
-    invalidate ('1', [0, 1, 2], '')
+    invalidate ('1', [0, 1, 2])
 
     >>> data = b'0 1 2 3 4 5 6 7 8'
     >>> transformed = s.transform_record_data(data)

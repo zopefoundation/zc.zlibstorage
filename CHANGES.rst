@@ -1,6 +1,13 @@
 Changes
 =======
 
+1.0.1 (2016-08-03)
+------------------
+
+Fixed an incompatibility with ZODB5.  The previously optional and
+ignored version argument to the database ``invalidate`` method is now
+disallowed.
+
 1.0.0 (2015-11-11)
 ------------------
 
