@@ -1,7 +1,7 @@
 Changes
 =======
 
-1.0.1 (2016-08-03)
+1.1.0 (2016-08-03)
 ------------------
 
 - Fixed an incompatibility with ZODB5.  The previously optional and
