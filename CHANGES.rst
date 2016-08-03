@@ -4,9 +4,11 @@ Changes
 1.0.1 (2016-08-03)
 ------------------
 
-Fixed an incompatibility with ZODB5.  The previously optional and
-ignored version argument to the database ``invalidate`` method is now
-disallowed.
+- Fixed an incompatibility with ZODB5.  The previously optional and
+  ignored version argument to the database ``invalidate`` method is now
+  disallowed.
+
+- Drop Python 2.6, 3.2, and 3.3 support. Added Python 3.4 and 3.5 support.
 
 1.0.0 (2015-11-11)
 ------------------
