@@ -38,6 +38,10 @@ from zope.testing.renormalizing import RENormalizing
 
 import zc.zlibstorage
 
+def _copy(dest, src):
+    with open(src, 'rb') as srcf:
+        with open(dest, 'wb') as destf:
+            destf.write(srcf.read())
 
 def test_config():
     r"""
@@ -185,7 +189,7 @@ Let's try packing the file 4 ways:
 
 - using the compressed storage:
 
-    >>> _ = open('data.fs.save', 'wb').write(open('data.fs', 'rb').read())
+    >>> _copy('data.fs.save', 'data.fs')
     >>> db = ZODB.DB(zc.zlibstorage.ZlibStorage(
     ...     ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs')))
     >>> db.pack()
@@ -195,7 +199,7 @@ Let's try packing the file 4 ways:
 
 - using the storage in non-compress mode:
 
-    >>> _ = open('data.fs', 'wb').write(open('data.fs.save', 'rb').read())
+    >>> _copy('data.fs', 'data.fs.save')
     >>> db = ZODB.DB(zc.zlibstorage.ZlibStorage(
     ...     ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs'),
     ...     compress=False))
@@ -207,7 +211,7 @@ Let's try packing the file 4 ways:
 
 - using the server storage:
 
-    >>> _ = open('data.fs', 'wb').write(open('data.fs.save', 'rb').read())
+    >>> _copy('data.fs', 'data.fs.save')
     >>> db = ZODB.DB(zc.zlibstorage.ServerZlibStorage(
     ...     ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs'),
     ...     compress=False))
@@ -219,7 +223,7 @@ Let's try packing the file 4 ways:
 
 - using the server storage in non-compress mode:
 
-    >>> _ = open('data.fs', 'wb').write(open('data.fs.save', 'rb').read())
+    >>> _copy('data.fs', 'data.fs.save')
     >>> db = ZODB.DB(zc.zlibstorage.ServerZlibStorage(
     ...     ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs'),
     ...     compress=False))
@@ -400,6 +404,57 @@ class FileStorageClientZlibZEOServerZlibTests(
         </serverzlibstorage>
         """
 
+class TestIterator(unittest.TestCase):
+
+    def test_iterator_closes_underlying_explicitly(self):
+        # https://github.com/zopefoundation/zc.zlibstorage/issues/4
+
+        class Storage(object):
+
+            storage_value = 42
+            iterator_closed = False
+
+            def registerDB(self, db):
+                pass
+
+            def iterator(self, start=None, stop=None):
+                return self
+
+            def __iter__(self):
+                return self
+
+            def __next__(self):
+                return self
+
+            next = __next__
+
+            def close(self):
+                self.iterator_closed = True
+
+        storage = Storage()
+        zstorage = zc.zlibstorage.ZlibStorage(storage)
+
+        it = zstorage.iterator()
+
+        # Make sure it proxies all attributes
+        self.assertEqual(42, getattr(it, 'storage_value'))
+
+        # Make sure it iterates (whose objects also proxy)
+        self.assertEqual(42, getattr(next(it), 'storage_value'))
+
+        # The real iterator is closed
+        it.close()
+
+        self.assertTrue(storage.iterator_closed)
+
+        # And we can't move on; the wrapper prevents it even though
+        # the underlying storage implementation is broken
+        self.assertRaises(StopIteration, next, it)
+
+        # We can keep closing it though
+        it.close()
+
+
 def test_suite():
     suite = unittest.TestSuite()
     for class_ in (
@@ -415,8 +470,10 @@ def test_suite():
             'zlibstoragetests.%s' % class_.__name__)
         suite.addTest(s)
 
+    suite.addTest(unittest.makeSuite(TestIterator))
+
     # The conflict resolution and blob tests don't exercise proper
-    # plumbing for libstorage because the sample data they use
+    # plumbing for zlibstorage because the sample data they use
     # compresses to larger than the original.  Run the tests again
     # after monkey patching zlibstorage to compress everything.
 
@@ -442,6 +499,9 @@ def test_suite():
         # Py3k renders bytes where Python2 used native strings...
         (re.compile(r"b'"), "'"),
         (re.compile(r'b"'), '"'),
+        # Older versions of PyPy2 (observed in PyPy2 5.4 but not 5.6)
+        # produce long integers (1L) where we expect normal ints
+        (re.compile(r"(\d)L"), r"\1")
     ])
 
     suite.addTest(doctest.DocTestSuite(
@@ -454,4 +514,3 @@ def test_suite():
         setUp=setupstack.setUpDirectory, tearDown=setupstack.tearDown
         ))
     return suite
-
