@@ -6,9 +6,26 @@ python:
     - 3.5
     - 3.6
     - pypy-5.4.1
+env:
+  matrix:
+    - ENV=ZODB5
+    - ENV=ZODB4
+matrix:
+  # Only test ZODB 4 on Python 2.7 (because there are
+  # some versions of Python 2.7 that cant run ZODB/ZEO 5)
+  exclude:
+    - python: 3.4
+      env: ENV=ZODB4
+    - python: 3.5
+      env: ENV=ZODB4
+    - python: 3.6
+      env: ENV=ZODB4
+    - python: pypy-5.4.1
+      env: ENV=ZODB4
 install:
     - pip install -U pip setuptools
     - pip install -U -e .[test] zope.testrunner
+    - if [[ $ENV == ZODB4 ]]; then pip uninstall -y ZEO ZODB transaction && pip install "ZODB < 5" "ZEO < 5" "transaction < 2"; fi
 script:
     - zope-testrunner --test-path=src -v1j99
 notifications:

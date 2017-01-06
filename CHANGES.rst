@@ -7,8 +7,7 @@
 
 - Add support for Python 3.6 and PyPy.
 
-- Restrict ZODB dependency to less than 5.0, and transaction to less
-  than 2.0. ServerZlibStorage currently doesn't work with ZEO 5.
+- Test with both ZODB/ZEO 4 and ZODB/ZEO 5
   (https://github.com/zopefoundation/zc.zlibstorage/issues/5).
 
 - Close the underlying iterator used by the ``iterator`` wrapper when
