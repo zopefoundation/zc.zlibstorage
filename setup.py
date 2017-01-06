@@ -13,8 +13,8 @@
 ##############################################################################
 name, version = 'zc.zlibstorage', '1.1.0'
 
-install_requires = ['setuptools', 'ZODB', 'zope.interface']
-extras_require = dict(test=['zope.testing', 'manuel', 'ZEO'])
+install_requires = ['setuptools', 'ZODB < 5', 'zope.interface', 'transaction < 2']
+extras_require = dict(test=['zope.testing', 'manuel', 'ZEO[test] < 5'])
 
 entry_points = """
 """
@@ -41,9 +41,13 @@ setup(
     long_description=long_description,
     description=long_description.split('\n')[1],
     classifiers=[
+        "Programming Language :: Python",
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Programming Language :: Python :: Implementation :: PyPy",
     ],
     packages=[name.split('.')[0], name],
     namespace_packages=[name.split('.')[0]],
