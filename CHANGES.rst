@@ -2,14 +2,14 @@
  Changes
 =========
 
-1.2.0 (unreleased)
+1.2.0 (2017-01-20)
 ==================
 
 - Add support for Python 3.6 and PyPy.
 
 - Test with both ZODB/ZEO 4 and ZODB/ZEO 5.
   Note that ServerZlibStorage cannot be used in a ZODB 5 Connection
-  (e.g., client-side).
+  (e.g., client-side, which wouldn't make sense :-]).
   (https://github.com/zopefoundation/zc.zlibstorage/issues/5).
 
 - Close the underlying iterator used by the ``iterator`` wrapper when
