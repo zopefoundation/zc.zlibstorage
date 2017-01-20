@@ -208,30 +208,6 @@ Let's try packing the file 4 ways:
     >>> sorted(ZODB.utils.u64(i[0]) for i in record_iter(db.storage))
     [0, 2, 3]
     >>> db.close()
-
-- using the server storage:
-
-    >>> _copy('data.fs', 'data.fs.save')
-    >>> db = ZODB.DB(zc.zlibstorage.ServerZlibStorage(
-    ...     ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs'),
-    ...     compress=False))
-
-    >>> db.pack()
-    >>> sorted(ZODB.utils.u64(i[0]) for i in record_iter(db.storage))
-    [0, 2, 3]
-    >>> db.close()
-
-- using the server storage in non-compress mode:
-
-    >>> _copy('data.fs', 'data.fs.save')
-    >>> db = ZODB.DB(zc.zlibstorage.ServerZlibStorage(
-    ...     ZODB.FileStorage.FileStorage('data.fs', blob_dir='blobs'),
-    ...     compress=False))
-
-    >>> db.pack()
-    >>> sorted(ZODB.utils.u64(i[0]) for i in record_iter(db.storage))
-    [0, 2, 3]
-    >>> db.close()
     """
 
 class Dummy:
@@ -454,6 +430,31 @@ class TestIterator(unittest.TestCase):
         # We can keep closing it though
         it.close()
 
+class TestServerZlibStorage(unittest.TestCase):
+
+    def test_load_doesnt_decompress(self):
+        # ServerZlibStorage.load doesn't uncompress the record.
+        # (This prevents it from being used with a ZODB 5 Connection)
+        # See https://github.com/zopefoundation/zc.zlibstorage/issues/5
+        map_store = ZODB.MappingStorage.MappingStorage()
+        store = zc.zlibstorage.ZlibStorage(map_store)
+        # Wrap a database to create the root object, and add data to make it
+        # big enough to compress
+        db = ZODB.DB(store)
+        conn = db.open()
+        conn.root.a = b'x' * 128
+        transaction.commit()
+        conn.close()
+
+        root_data, _ = store.load(ZODB.utils.z64)
+        self.assertNotEqual(root_data[:2], b'.z')
+
+        server_store = zc.zlibstorage.ServerZlibStorage(map_store)
+        server_root_data, _ = server_store.load(ZODB.utils.z64)
+        self.assertEqual(server_root_data[:2], b'.z')
+
+        db.close()
+
 
 def test_suite():
     suite = unittest.TestSuite()
@@ -471,6 +472,7 @@ def test_suite():
         suite.addTest(s)
 
     suite.addTest(unittest.makeSuite(TestIterator))
+    suite.addTest(unittest.makeSuite(TestServerZlibStorage))
 
     # The conflict resolution and blob tests don't exercise proper
     # plumbing for zlibstorage because the sample data they use
