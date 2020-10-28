@@ -7,6 +7,6 @@ implementations that provides compression of database records.
 
 See src/zc/zlibstorage/README.txt.
 
-.. image:: https://api.travis-ci.org/zopefoundation/zc.zlibstorage.png?branch=master
-   :target: https://travis-ci.org/zopefoundation/zc.zlibstorage
+.. image:: https://api.travis-ci.com/zopefoundation/zc.zlibstorage.png?branch=master
+   :target: https://travis-ci.com/zopefoundation/zc.zlibstorage
    :alt: Build Status
