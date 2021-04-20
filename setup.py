@@ -47,7 +47,9 @@ setup(
     author_email='jim@zope.com',
     license='ZPL 2.1',
 
-    name=name, version=version,
+    name=name,
+    version=version,
+    url='https://github.com/zopefoundation/zc.zlibstorage/',
     long_description=long_description,
     description=long_description.split('\n')[1],
     classifiers=[
