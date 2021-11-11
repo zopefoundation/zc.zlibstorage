@@ -23,6 +23,7 @@ extras_require = {
         'zope.testing',
         'manuel',
         'ZEO[test]',
+        'zodbpickle',
     ]
 }
 
