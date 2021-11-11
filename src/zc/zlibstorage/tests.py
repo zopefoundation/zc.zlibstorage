@@ -18,7 +18,7 @@ import doctest
 import zlib
 import binascii
 import re
-import pickle
+from zodbpickle import pickle
 
 import manuel.capture
 import manuel.doctest
