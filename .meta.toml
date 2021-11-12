@@ -23,10 +23,15 @@ testenv-additional = [
     "",
     "[testenv:py27-zodb4]",
     "deps =",
-    "     {[testenv]deps}",
+    "     zope.testrunner",
     "     ZODB < 5",
     "     ZEO < 5",
     ]
 
 [coverage]
 fail-under = 0
+
+[github-actions]
+additional-config = [
+    "- [\"2.7\",   \"py27-zodb4\"]",
+    ]

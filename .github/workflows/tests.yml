@@ -31,6 +31,7 @@ jobs:
         - ["pypy2", "pypy"]
         - ["pypy3", "pypy3"]
         - ["3.9",   "coverage"]
+        - ["2.7",   "py27-zodb4"]
 
     runs-on: ${{ matrix.os }}-latest
     name: ${{ matrix.config[1] }}
