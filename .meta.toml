@@ -1,0 +1,32 @@
+# Generated from:
+# https://github.com/zopefoundation/meta/tree/master/config/pure-python
+[meta]
+template = "pure-python"
+commit-id = "7ba9f0ab57f337834841b7a34aa4dc169bae14cf"
+
+[python]
+with-windows = false
+with-pypy = true
+with-future-python = false
+with-legacy-python = true
+with-sphinx-doctests = false
+
+[tox]
+use-flake8 = true
+additional-envlist = [
+    "py27-zodb4",
+    ]
+testenv-commands = [
+    "zope-testrunner --test-path=src -j99 {posargs:-vc}",
+    ]
+testenv-additional = [
+    "",
+    "[testenv:py27-zodb4]",
+    "deps =",
+    "     {[testenv]deps}",
+    "     ZODB < 5",
+    "     ZEO < 5",
+    ]
+
+[coverage]
+fail-under = 0

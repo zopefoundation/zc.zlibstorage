@@ -1,7 +1,8 @@
-include src/zc/zlibstorage/README.txt
-include src/zc/zlibstorage/component.xml
-include bootstrap.py
+# Generated from:
+# https://github.com/zopefoundation/meta/tree/master/config/pure-python
+include *.rst
+include *.txt
 include buildout.cfg
 include tox.ini
-include .travis.yml
-include *.rst
+
+recursive-include src *.py
