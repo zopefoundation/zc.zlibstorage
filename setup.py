@@ -11,8 +11,8 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-name, version = 'zc.zlibstorage', '1.2.0'
-
+name = 'zc.zlibstorage'
+version = '1.3.0.dev0'
 install_requires = [
     'setuptools',
     'ZODB',
