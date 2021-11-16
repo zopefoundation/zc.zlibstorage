@@ -15,18 +15,19 @@ import zlib
 import ZODB.interfaces
 import zope.interface
 
+
 @zope.interface.implementer(
-        ZODB.interfaces.IStorageWrapper,
-        )
+    ZODB.interfaces.IStorageWrapper,
+)
 class ZlibStorage(object):
 
     copied_methods = (
-            'close', 'getName', 'getSize', 'history', 'isReadOnly',
-            'lastTransaction', 'new_oid', 'sortKey',
-            'tpc_abort', 'tpc_begin', 'tpc_finish', 'tpc_vote',
-            'loadBlob', 'openCommittedBlobFile', 'temporaryDirectory',
-            'supportsUndo', 'undo', 'undoLog', 'undoInfo',
-            )
+        'close', 'getName', 'getSize', 'history', 'isReadOnly',
+        'lastTransaction', 'new_oid', 'sortKey',
+        'tpc_abort', 'tpc_begin', 'tpc_finish', 'tpc_vote',
+        'loadBlob', 'openCommittedBlobFile', 'temporaryDirectory',
+        'supportsUndo', 'undo', 'undoLog', 'undoInfo',
+    )
 
     def __init__(self, base, *args, **kw):
         self.base = base
@@ -72,6 +73,7 @@ class ZlibStorage(object):
 
     def pack(self, pack_time, referencesf, gc=None):
         _untransform = self._untransform
+
         def refs(p, oids=None):
             return referencesf(_untransform(p), oids)
         if gc is not None:
@@ -130,8 +132,6 @@ class ZlibStorage(object):
     def copyTransactionsFrom(self, other):
         ZODB.blob.copyTransactionsFromTo(other, self)
 
-    def copyTransactionsFrom(self, other):
-        ZODB.blob.copyTransactionsFromTo(other, self)
 
 def compress(data):
     if data and (len(data) > 20) and data[:2] != b'.z':
@@ -140,8 +140,10 @@ def compress(data):
             return compressed
     return data
 
+
 def decompress(data):
     return data[:2] == b'.z' and zlib.decompress(data[2:]) or data
+
 
 class ServerZlibStorage(ZlibStorage):
     """Use on ZEO storage server when ZlibStorage is used on client
@@ -153,7 +155,8 @@ class ServerZlibStorage(ZlibStorage):
     copied_methods = ZlibStorage.copied_methods + (
         'load', 'loadBefore', 'loadSerial', 'store', 'restore',
         'iterator', 'storeBlob', 'restoreBlob', 'record_iternext',
-        )
+    )
+
 
 class _Iterator(object):
     # A class that allows for proper closing of the underlying iterator
@@ -184,6 +187,7 @@ class _Iterator(object):
     def __getattr__(self, name):
         return getattr(self._base_it, name)
 
+
 class Transaction(object):
 
     def __init__(self, trans):
@@ -213,6 +217,7 @@ class ZConfig:
         if compress is None:
             compress = True
         return self._factory(base, compress)
+
 
 class ZConfigServer(ZConfig):
 

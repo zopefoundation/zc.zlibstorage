@@ -2,7 +2,7 @@
 # https://github.com/zopefoundation/meta/tree/master/config/pure-python
 [meta]
 template = "pure-python"
-commit-id = "7ba9f0ab57f337834841b7a34aa4dc169bae14cf"
+commit-id = "aef18fe5ee64014d8b1b9de21f1e0a0991be874e"
 
 [python]
 with-windows = false
@@ -34,4 +34,10 @@ fail-under = 0
 [github-actions]
 additional-config = [
     "- [\"2.7\",   \"py27-zodb4\"]",
+    ]
+
+[manifest]
+additional-rules = [
+    "recursive-include src *.txt",
+    "recursive-include src *.xml",
     ]
