@@ -363,6 +363,8 @@ class FileStorageZEOZlibTests(ZEO.tests.testZEO.FileStorageTests):
 
 class FileStorageClientZlibZEOZlibTests(FileStorageZEOZlibTests):
 
+    use_extension_bytes = True
+
     def _wrap_client(self, client):
         return zc.zlibstorage.ZlibStorage(client)
 
