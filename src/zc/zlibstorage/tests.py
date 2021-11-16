@@ -38,10 +38,12 @@ from zope.testing.renormalizing import RENormalizing
 
 import zc.zlibstorage
 
+
 def _copy(dest, src):
     with open(src, 'rb') as srcf:
         with open(dest, 'wb') as destf:
             destf.write(srcf.read())
+
 
 def test_config():
     r"""
@@ -90,6 +92,7 @@ doing so would make them bigger:
     ...         else: _ = zlib.decompress(data[2:])
     """
 
+
 def test_config_no_compress():
     r"""
 
@@ -127,6 +130,7 @@ Since we didn't compress, we can open the storage using a plain file storage:
     True
     >>> db.close()
     """
+
 
 def test_mixed_compressed_and_uncompressed_and_packing():
     r"""
@@ -210,6 +214,7 @@ Let's try packing the file 4 ways:
     >>> db.close()
     """
 
+
 class Dummy:
 
     def invalidateCache(self):
@@ -288,6 +293,7 @@ If the data are small or otherwise not compressable, it is left as is:
     [0, 1, 2, '0', '1']
     """
 
+
 def dont_double_compress():
     """
     This test is a bit artificial in that we want to make sure we
@@ -297,10 +303,12 @@ def dont_double_compress():
     that start withe the compressed marker.
 
     >>> data = b'.z'+b'x'*80
-    >>> store = zc.zlibstorage.ZlibStorage(ZODB.MappingStorage.MappingStorage())
+    >>> store = zc.zlibstorage.ZlibStorage(
+    ...     ZODB.MappingStorage.MappingStorage())
     >>> store._transform(data) == data
     True
     """
+
 
 def record_iter(store):
     next = None
@@ -315,10 +323,11 @@ class FileStorageZlibTests(ZODB.tests.testFileStorage.FileStorageTests):
 
     def open(self, **kwargs):
         self._storage = zc.zlibstorage.ZlibStorage(
-            ZODB.FileStorage.FileStorage('FileStorageTests.fs',**kwargs))
+            ZODB.FileStorage.FileStorage('FileStorageTests.fs', **kwargs))
+
 
 class FileStorageZlibTestsWithBlobsEnabled(
-    ZODB.tests.testFileStorage.FileStorageTests):
+        ZODB.tests.testFileStorage.FileStorageTests):
 
     def open(self, **kwargs):
         if 'blob_dir' not in kwargs:
@@ -327,8 +336,9 @@ class FileStorageZlibTestsWithBlobsEnabled(
         ZODB.tests.testFileStorage.FileStorageTests.open(self, **kwargs)
         self._storage = zc.zlibstorage.ZlibStorage(self._storage)
 
+
 class FileStorageZlibRecoveryTest(
-    ZODB.tests.testFileStorage.FileStorageRecoveryTest):
+        ZODB.tests.testFileStorage.FileStorageRecoveryTest):
 
     def setUp(self):
         ZODB.tests.StorageTestBase.StorageTestBase.setUp(self)
@@ -336,7 +346,6 @@ class FileStorageZlibRecoveryTest(
             ZODB.FileStorage.FileStorage("Source.fs", create=True))
         self._dst = zc.zlibstorage.ZlibStorage(
             ZODB.FileStorage.FileStorage("Dest.fs", create=True))
-
 
 
 class FileStorageZEOZlibTests(ZEO.tests.testZEO.FileStorageTests):
@@ -349,7 +358,7 @@ class FileStorageZEOZlibTests(ZEO.tests.testZEO.FileStorageTests):
         ('ZODB.interfaces', 'IStorage'),
         ('ZODB.interfaces', 'IStorageWrapper'),
         ('zope.interface', 'Interface'),
-        )
+    )
 
     def getConfig(self):
         return """\
@@ -361,6 +370,7 @@ class FileStorageZEOZlibTests(ZEO.tests.testZEO.FileStorageTests):
         </zlibstorage>
         """
 
+
 class FileStorageClientZlibZEOZlibTests(FileStorageZEOZlibTests):
 
     use_extension_bytes = True
@@ -368,9 +378,10 @@ class FileStorageClientZlibZEOZlibTests(FileStorageZEOZlibTests):
     def _wrap_client(self, client):
         return zc.zlibstorage.ZlibStorage(client)
 
+
 class FileStorageClientZlibZEOServerZlibTests(
     FileStorageClientZlibZEOZlibTests
-    ):
+):
 
     def getConfig(self):
         return """\
@@ -381,6 +392,7 @@ class FileStorageClientZlibZEOServerZlibTests(
         </filestorage>
         </serverzlibstorage>
         """
+
 
 class TestIterator(unittest.TestCase):
 
@@ -432,6 +444,7 @@ class TestIterator(unittest.TestCase):
         # We can keep closing it though
         it.close()
 
+
 class TestServerZlibStorage(unittest.TestCase):
 
     def test_load_doesnt_decompress(self):
@@ -467,7 +480,7 @@ def test_suite():
         FileStorageZEOZlibTests,
         FileStorageClientZlibZEOZlibTests,
         FileStorageClientZlibZEOServerZlibTests,
-        ):
+    ):
         s = unittest.makeSuite(class_, "check")
         s.layer = ZODB.tests.util.MininalTestLayer(
             'zlibstoragetests.%s' % class_.__name__)
@@ -483,13 +496,13 @@ def test_suite():
 
     class ZLibHackLayer:
 
-        orig = [zc.zlibstorage.compress] # []s hide the function :)
+        orig = [zc.zlibstorage.compress]  # []s hide the function :)
 
         @classmethod
         def setUp(self):
             zc.zlibstorage.transform = (
                 lambda data: data and (b'.z'+zlib.compress(data)) or data
-                )
+            )
 
         @classmethod
         def tearDown(self):
@@ -511,10 +524,10 @@ def test_suite():
     suite.addTest(doctest.DocTestSuite(
         checker=checker,
         setUp=setupstack.setUpDirectory, tearDown=setupstack.tearDown
-        ))
+    ))
     suite.addTest(manuel.testing.TestSuite(
         manuel.doctest.Manuel() + manuel.capture.Manuel(),
         'README.txt',
         setUp=setupstack.setUpDirectory, tearDown=setupstack.tearDown
-        ))
+    ))
     return suite

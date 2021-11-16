@@ -11,8 +11,10 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-name, version = 'zc.zlibstorage', '1.2.0'
-
+import os
+from setuptools import setup
+name = 'zc.zlibstorage'
+version = '1.3.0.dev0'
 install_requires = [
     'setuptools',
     'ZODB',
@@ -29,9 +31,6 @@ extras_require = {
 
 entry_points = """
 """
-
-from setuptools import setup
-import os
 
 
 def read(filename):
@@ -56,9 +55,12 @@ setup(
     classifiers=[
         "Programming Language :: Python",
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
     ],
