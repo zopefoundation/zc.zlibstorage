@@ -5,7 +5,7 @@
 1.3.0 (unreleased)
 ==================
 
-- Add support for Python 3.6, 3.7, 3.8, 3.9 and 3.10.
+- Add support for Python 3.6, 3.7, 3.8, 3.9, 3.10, 3.11.
 
 - Drop support for Python 3.4.
 
