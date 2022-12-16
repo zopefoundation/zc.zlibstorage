@@ -13,12 +13,11 @@
 ##############################################################################
 from __future__ import print_function
 
-import unittest
-import doctest
-import zlib
 import binascii
+import doctest
 import re
-from zodbpickle import pickle
+import unittest
+import zlib
 
 import manuel.capture
 import manuel.doctest
@@ -33,6 +32,7 @@ import ZODB.tests.StorageTestBase
 import ZODB.tests.testFileStorage
 import ZODB.utils
 import zope.interface.verify
+from zodbpickle import pickle
 from zope.testing import setupstack
 from zope.testing.renormalizing import RENormalizing
 
