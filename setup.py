@@ -17,7 +17,7 @@ from setuptools import setup
 
 
 name = 'zc.zlibstorage'
-version = '1.3.0.dev0'
+version = '2.0.dev0'
 install_requires = [
     'setuptools',
     'ZODB',
