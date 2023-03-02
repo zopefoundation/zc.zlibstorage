@@ -47,7 +47,7 @@ long_description = readme + '\n\n' + changes
 
 setup(
     author='Jim Fulton',
-    author_email='jim@zope.com',
+    author_email='zope-dev@zope.dev',
     license='ZPL 2.1',
 
     name=name,
@@ -57,9 +57,6 @@ setup(
     description=long_description.split('\n')[1],
     classifiers=[
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
@@ -71,11 +68,10 @@ setup(
     packages=[name.split('.')[0], name],
     namespace_packages=[name.split('.')[0]],
     package_dir={'': 'src'},
+    python_requires='>=3.7',
     install_requires=install_requires,
     zip_safe=False,
     entry_points=entry_points,
     include_package_data=True,
     extras_require=extras_require,
-    tests_require=extras_require['test'],
-    test_suite=name + '.tests.test_suite',
 )

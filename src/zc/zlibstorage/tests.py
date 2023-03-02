@@ -11,11 +11,9 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-from __future__ import print_function
 
 import binascii
 import doctest
-import re
 import unittest
 import zlib
 
@@ -34,7 +32,6 @@ import ZODB.utils
 import zope.interface.verify
 from zodbpickle import pickle
 from zope.testing import setupstack
-from zope.testing.renormalizing import RENormalizing
 
 import zc.zlibstorage
 
@@ -260,14 +257,14 @@ Make sure the wrapping methods do what's expected.
     True
 
     >>> s.references(transformed)
-    ['0', '1', '2', '3', '4', '5', '6', '7', '8']
+    [b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8']
 
     >>> l = list(range(3))
     >>> s.references(transformed, l)
-    [0, 1, 2, '0', '1', '2', '3', '4', '5', '6', '7', '8']
+    [0, 1, 2, b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8']
 
     >>> l
-    [0, 1, 2, '0', '1', '2', '3', '4', '5', '6', '7', '8']
+    [0, 1, 2, b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8']
 
 If the data are small or otherwise not compressable, it is left as is:
 
@@ -283,14 +280,14 @@ If the data are small or otherwise not compressable, it is left as is:
     True
 
     >>> s.references(transformed)
-    ['0', '1']
+    [b'0', b'1']
 
     >>> l = list(range(3))
     >>> s.references(transformed, l)
-    [0, 1, 2, '0', '1']
+    [0, 1, 2, b'0', b'1']
 
     >>> l
-    [0, 1, 2, '0', '1']
+    [0, 1, 2, b'0', b'1']
     """
 
 
@@ -399,7 +396,7 @@ class TestIterator(unittest.TestCase):
     def test_iterator_closes_underlying_explicitly(self):
         # https://github.com/zopefoundation/zc.zlibstorage/issues/4
 
-        class Storage(object):
+        class Storage:
 
             storage_value = 42
             iterator_closed = False
@@ -481,13 +478,15 @@ def test_suite():
         FileStorageClientZlibZEOZlibTests,
         FileStorageClientZlibZEOServerZlibTests,
     ):
-        s = unittest.makeSuite(class_, "check")
+        s = unittest.defaultTestLoader.loadTestsFromTestCase(class_,)
         s.layer = ZODB.tests.util.MininalTestLayer(
             'zlibstoragetests.%s' % class_.__name__)
         suite.addTest(s)
 
-    suite.addTest(unittest.makeSuite(TestIterator))
-    suite.addTest(unittest.makeSuite(TestServerZlibStorage))
+    suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(
+        TestIterator))
+    suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(
+        TestServerZlibStorage))
 
     # The conflict resolution and blob tests don't exercise proper
     # plumbing for zlibstorage because the sample data they use
@@ -508,21 +507,12 @@ def test_suite():
         def tearDown(self):
             [zc.zlibstorage.compress] = self.orig
 
-    s = unittest.makeSuite(FileStorageZlibTestsWithBlobsEnabled, "check")
+    s = unittest.defaultTestLoader.loadTestsFromTestCase(
+        FileStorageZlibTestsWithBlobsEnabled)
     s.layer = ZLibHackLayer
     suite.addTest(s)
 
-    checker = RENormalizing([
-        # Py3k renders bytes where Python2 used native strings...
-        (re.compile(r"b'"), "'"),
-        (re.compile(r'b"'), '"'),
-        # Older versions of PyPy2 (observed in PyPy2 5.4 but not 5.6)
-        # produce long integers (1L) where we expect normal ints
-        (re.compile(r"(\d)L"), r"\1")
-    ])
-
     suite.addTest(doctest.DocTestSuite(
-        checker=checker,
         setUp=setupstack.setUpDirectory, tearDown=setupstack.tearDown
     ))
     suite.addTest(manuel.testing.TestSuite(
