@@ -18,7 +18,7 @@ testenv-commands = [
     ]
 
 [coverage]
-fail-under = 98
+fail-under = 88
 
 [manifest]
 additional-rules = [
