@@ -42,6 +42,9 @@ class ZlibStorage:
             self._transform = lambda data: data
         self._untransform = decompress
 
+        if hasattr(base, 'loadBeforeEx'):
+            self.loadBeforeEx = self._loadBeforeEx
+
         for name in self.copied_methods:
             v = getattr(base, name, None)
             if v is not None:
@@ -60,6 +63,12 @@ class ZlibStorage:
     def load(self, oid, version=''):
         data, serial = self.base.load(oid, version)
         return self._untransform(data), serial
+
+    def _loadBeforeEx(self, oid, tid):
+        data, serial = self.base.loadBeforeEx(oid, tid)
+        if data is not None:
+            data = self._untransform(data)
+        return data, serial
 
     def loadBefore(self, oid, tid):
         r = self.base.loadBefore(oid, tid)
@@ -154,7 +163,7 @@ class ServerZlibStorage(ZlibStorage):
     """
 
     copied_methods = ZlibStorage.copied_methods + (
-        'load', 'loadBefore', 'loadSerial', 'store', 'restore',
+        'load', 'loadBefore', 'loadBeforeEx', 'loadSerial', 'store', 'restore',
         'iterator', 'storeBlob', 'restoreBlob', 'record_iternext',
     )
 
